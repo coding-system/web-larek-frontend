@@ -3,31 +3,31 @@ export type TPaymentOption = 'card' | 'cash';
 
 // Категории
 export type TCategoryType =
-  | 'софт-скилл'
-  | 'другое'
-  | 'дополнительное'
-  | 'кнопка'
-  | 'хард-скил';
+	| 'софт-скилл'
+	| 'другое'
+	| 'дополнительное'
+	| 'кнопка'
+	| 'хард-скил';
 
 // Товар
 export interface IProduct {
-   id: string;
-   title: string;
-   description: string;
-   category: TCategoryType;
-   price: number | null;
-   image: string;
- }
+	id: string;
+	title: string;
+	description: string;
+	category: TCategoryType;
+	price: number | null;
+	image: string;
+}
 
 // Заказ
 export interface IOrder {
-   items: string[]; // ID товаров
-   total: number;
-   payment: TPaymentOption;
-   address: string;
-   phone: string;
-   email: string;
- }
+	items: string[]; // ID товаров
+	total: number;
+	payment: TPaymentOption;
+	address: string;
+	phone: string;
+	email: string;
+}
 
 // export interface ICart {
 //    items: IProduct[];
@@ -40,16 +40,23 @@ export interface IOrder {
 
 // Форма оформленного заказа
 export interface IOrderCompleted {
-   id: string;
-   total: number;
- }
+	id: string;
+	total: number;
+}
 
-export type IProductMainPage = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>
+export type IProductMainPage = Pick<
+	IProduct,
+	'image' | 'title' | 'category' | 'price'
+>;
 
-export type IProductPopup = Pick<IProduct, 'image' | 'title' | 'category' | 'price' | 'description'>
-    
-export type IProductToAdd = Pick<IProduct, 'id' | 'title' | 'price' >
-    
-export type IOrderFormData = Pick<IOrder, 'payment' | 'address' | 'email' | 'phone'>
-    
-    
+export type IProductPopup = Pick<
+	IProduct,
+	'image' | 'title' | 'category' | 'price' | 'description'
+>;
+
+export type IProductToAdd = Pick<IProduct, 'id' | 'title' | 'price'>;
+
+export type IOrderFormData = Pick<
+	IOrder,
+	'payment' | 'address' | 'email' | 'phone'
+>;
