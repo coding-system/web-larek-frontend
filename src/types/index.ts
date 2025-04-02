@@ -1,51 +1,55 @@
 // Методы оплаты
-type TPaymentOption = 'card' | 'cash';
+export type TPaymentOption = 'card' | 'cash';
 
 // Категории
-type TCategoryType =
+export type TCategoryType =
 	| 'софт-скилл'
 	| 'другое'
 	| 'дополнительное'
 	| 'кнопка'
 	| 'хард-скил';
 
-// Ошибка валидации форм
-type FormErrors = Partial<Record<keyof IOrderForm, string>>;
-
 // Товар
-interface IProduct {
+export interface IProduct {
 	id: string;
+   title: string;
 	description: string;
-	title: string;
 	category: TCategoryType;
 	price: number;
-}
-
-// Карточка товара
-interface ICard extends IProduct {
-	image: string;
-}
-
-// Информация о пользователе
-interface IUserInfo {
-   phone: string;
-   email: string;
-   address: string;
-}
-
-// Форма заказа
-interface IOrderForm extends IUserInfo {
-	payment: TPaymentOption;
+   image: string;
 }
 
 // Заказ
-interface IOrder extends IOrderForm {
+export interface IOrder {
 	items: string[];
+   total: number;
+   payment: string;
+   address: string;
+   phone: string;
+   email: string;
+}
+
+export interface ICart {
+   items: IProduct[];
    total: number;
 }
 
+export interface ICatalog {
+   items: IProduct[];
+}
+
 // Форма оформленного заказа
-interface IOrderСompleted {
+export interface IOrderСompleted {
 	id: string;
 	total: number;
 }
+
+export type IProductMainPage = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>
+
+export type IProductPopup = Pick<IProduct, 'image' | 'title' | 'category' | 'price' | 'description'>
+    
+export type IProductToAdd = Pick<IProduct, 'id' | 'title' | 'price' >
+    
+export type IOrderFormData = Pick<IOrder, 'payment' | 'address' | 'email' | 'phone'>
+    
+    

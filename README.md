@@ -1,17 +1,20 @@
 # Проектная работа "Веб-ларек"
 
-### Стек технолологий: 
+### Стек технолологий:
+
 - HTML
 - SCSS
 - TS
 - Webpack
 
 ### Структура проекта:
+
 - src/ — исходные файлы проекта
 - src/components/ — папка с JS компонентами
 - src/components/base/ — папка с базовым кодом
 
 ### Важные файлы:
+
 - src/pages/index.html — HTML-файл главной страницы
 - src/types/index.ts — файл с типами
 - src/index.ts — точка входа приложения
@@ -19,17 +22,17 @@
 - src/utils/constants.ts — файл с константами
 - src/utils/utils.ts — файл с утилитами
 
-  
-
 ## Установка и запуск
 
 Для установки и запуска проекта необходимо выполнить команды
+
 ```
 npm install
 npm run start
 ```
 
 или
+
 ```
 yarn
 yarn start
@@ -42,114 +45,225 @@ npm run build
 ```
 
 или
+
 ```
 yarn build
 ```
 
+## Типы данных
+
+Файл: `src/types/index.ts`
+
+1. **`TPaymentOption`**
+
+   - Тип: `'card' | 'cash'`
+   - Описание: Варианты оплаты.
+
+2. **`TCategoryType`**
+
+   - Тип: `'софт-скилл' | 'другое' | 'дополнительное' | 'кнопка' | 'хард-скил'`
+   - Описание: Категории товаров.
+
+3. **`IProduct`**
+
+   - Поля:
+     - `id: string` — уникальный ID.
+     - `title: string` — название.
+     - `description: string` — описание.
+     - `category: TCategoryType` — категория.
+     - `price: number | null` — цена (null, если не указана).
+     - `image: string` — URL изображения.
+   - Описание: Данные товара с сервера.
+
+4. **`IOrder`**
+
+   - Поля:
+     - `items: string[]` — массив ID товаров.
+     - `total: number` — общая сумма.
+     - `payment: TPaymentOption` — способ оплаты.
+     - `address: string` — адрес доставки.
+     - `phone: string` — телефон.
+     - `email: string` — email.
+   - Описание: Данные заказа.
+
+5. **`ICart`**
+
+   - Поля:
+     - `items: IProduct[]` — товары в корзине.
+   - Описание: Хранит товары, добавленные пользователем.
+
+6. **`ICatalog`**
+
+   - Поля:
+     - `items: IProduct[]` — товары в каталоге.
+   - Описание: Хранит полный список товаров.
+
+7. **`IOrderCompleted`**
+
+   - Поля:
+     - `id: string` — ID заказа.
+     - `total: number` — итоговая сумма.
+   - Описание: Ответ сервера после оформления заказа.
+
+8. **`IProductPreview`**
+
+   - Тип: `Pick<IProduct, 'image' | 'title' | 'category' | 'price'>`
+   - Описание: Данные для отображения карточки на главной странице.
+
+9. **`IProductToAdd`**
+
+   - Тип: `Pick<IProduct, 'id' | 'title' | 'price'>`
+   - Описание: Данные для добавления товара в корзину.
+
+10. **`IOrderFormData`**
+    - Тип: `Pick<IOrder, 'payment' | 'address' | 'email' | 'phone'>`
+    - Описание: Данные, вводимые в формы заказа.
+
+
 ## Архитектура приложения
-При разработке приложения был применен паттерн MVP:
-- слой для хранения и изменения данных,
-- слой для отображения данных на странице,
-- презентер (связывает слои данных и отображения).
 
-## Описание базовых типов данных
-### *Типы*
-- **TPaymentOption**
-   *Тип метода оплаты*
+Приложение построено по паттерну MVP:
 
-   ```ts
-   // Методы оплаты
-   type TPaymentOption = 'card' | 'cash';
-   ```
+- **Model** — слой данных, отвечает за хранение и обработку товаров, корзины и заказа.
+- **View** — слой представления, отображает данные на странице (каталог, модальные окна, корзина).
+- **Presenter** — связывает модель и представление через брокер событий (`EventEmitter`).
 
-- **TCategoryType**
-   *Тип категории продукта*
+### Базовые классы
 
-   ```ts
-   // Категории
-   type TCategoryType =
-	| 'софт-скилл'
-	| 'другое'
-	| 'дополнительное'
-	| 'кнопка'
-	| 'хард-скил';
-   ```
+1. **Api**
 
-### *Интерфейсы*
-- **IProduct**
-   *Данные товара*
+   - Отвечает за отправку запросов к серверу.
+   - Методы:
+     - `get(endpoint: string): Promise<any>` — получение данных (например, списка товаров).
+     - `post(endpoint: string, data: object): Promise<any>` — отправка данных (например, заказа).
 
-   ```ts
-   // Товар
-   interface IProduct {
-   	id: string;
-   	description: string;
-   	title: string;
-   	category: TCategoryType;
-   	price: number;
-   }
-   ```
+2. **EventEmitter**
+   - Брокер событий для взаимодействия между слоями.
+   - Методы:
+     - `on(event: string, callback: (data: any) => void)` — подписка на событие.
+     - `emit(event: string, data?: any)` — вызов события.
+     - `trigger(event: string)` — создание функции-триггера для события.
 
-- **ICard**
-   *Данные для отображения карточки товара*
+### Слой данных
 
-   ```ts
-   // Карточка товара
-   interface ICard extends IProduct {
-	image: string;
-   }
-   ```
+#### Класс `CatalogData`
 
-- **IUserInfo**
-   *Данные о пользователе хранятся в отдельном интерфейсе, чтобы избежать их повторного указания при каждом заказе*
+- Отвечает за работу с каталогом товаров.
+- Поля:
+  - `_items: IProduct[]` — массив товаров, полученных с сервера.
+  - `_events: EventEmitter` — экземпляр брокера событий.
+- Методы:
+  - `setItems(items: IProduct[]): void` — устанавливает товары в каталог.
+  - `getItems(): IProduct[]` — возвращает массив товаров.
+  - `getProduct(id: string): IProduct | undefined` — возвращает товар по ID.
 
-   ```ts
-   // Информация о пользователе
-   interface ICard extends IProduct {
-	image: string;
-   }
-   ```
+#### Класс `CartData`
 
-- **IOrderForm**
-   *Данные для отображения информайции о заказе. Включают в себя данные о пользователе*
+- Отвечает за управление корзиной.
+- Поля:
+  - `_items: IProduct[]` — массив товаров в корзине.
+  - `_events: EventEmitter` — экземпляр брокера событий.
+- Методы:
+  - `addItem(product: IProduct): void` — добавляет товар в корзину.
+  - `removeItem(productId: string): void` — удаляет товар из корзины.
+  - `getItems(): IProduct[]` — возвращает товары в корзине.
+  - `getTotal(): number` — подсчитывает общую сумму товаров.
+  - `clear(): void` — очищает корзину.
 
-   ```ts
-   // Форма заказа
-   interface IOrderForm extends IUserInfo {
-	payment: TPaymentOption;
-   }
-   ```
+#### Класс `OrderData`
 
-- **IOrder**
-   *Данные заказа. Включает в себя информацию о пользователе и способ оплаты*
+- Отвечает за работу с заказом.
+- Поля:
+  - `_order: IOrder` — объект заказа.
+  - `_events: EventEmitter` — экземпляр брокера событий.
+- Методы:
+  - `setField(field: keyof IOrderFormData, value: string): void` — устанавливает значение поля формы.
+  - `getOrder(): IOrder` — возвращает текущий заказ.
+  - `validatePayment(): Record<keyof Pick<IOrder, 'payment' | 'address'>, string>` — валидация формы оплаты и адреса (шаг 1).
+  - `validateContacts(): Record<keyof Pick<IOrder, 'email' | 'phone'>, string>` — валидация формы телефона и email (шаг 2).
+  - `submit(): Promise<IOrderCompleted>` — отправляет заказ на сервер после нажатия "Оплатить".
+  - `clear(): void` — очищает заказ после успешной отправки.
 
-   ```ts
-   // Заказ
-   interface IOrder extends IOrderForm {
-	items: string[];
-   total: number;
-   }
-   ```
+### Слой представления
 
-- **IOrderСompleted**
-   *Данные сформированного заказа для отображения формы*
+#### Класс `Page`
 
-   ```ts
-   // Форма оформленного заказа
-   interface IOrderСompleted {
-	id: string;
-	total: number;
-   }
-   ```
+- Отвечает за главную страницу.
+- Поля:
+  - `_catalog: HTMLElement` — контейнер для карточек товаров.
+  - `_cartCounter: HTMLElement` — счётчик товаров в корзине.
+- Методы:
+  - `renderCatalog(products: IProductPreview[]): void` — отображает каталог.
+  - `updateCartCounter(count: number): void` — обновляет счётчик корзины.
 
-## Базовый код
+#### Класс `ProductCard`
 
-### *Класс Api*
+- Отвечает за отображение карточки товара.
+- Поля:
+  - `_element: HTMLElement` — DOM-элемент карточки.
+- Методы:
+  - `render(data: IProductPreview | IProduct): HTMLElement` — заполняет карточку данными и возвращает элемент.
 
-Класс `Api` Хранит основные поля и методы, необходимые при работе с сервером.
-В конструктор передается базовый url (baseUrl) и опции запроса (options).
+#### Класс `Modal`
 
-Методы:
+- Универсальный класс для модальных окон.
+- Поля:
+  - `_modal: HTMLElement` — элемент модального окна.
+  - `_events: EventEmitter` — брокер событий.
+- Методы:
+  - `open(content: HTMLElement): void` — открывает модалку с переданным контентом.
+  - `close(): void` — закрывает модалку (по клику на оверлей или крестик).
 
-- `get` - выполняет GET запрос на переданный в параметрах ендпоинт и возвращает промис с объектом, которым ответил сервер
-- `post` - принимает объект с данными, которые будут переданы в JSON в теле запроса, и отправляет эти данные на ендпоинт переданный как параметр при вызове метода. По умолчанию выполняется `POST` запрос, но метод запроса может быть переопределен заданием третьего параметра при вызове.
+#### Класс `CartView`
+
+- Отвечает за отображение корзины.
+- Поля:
+  - `_items: HTMLElement` — контейнер для товаров.
+  - `_total: HTMLElement` — элемент с общей суммой.
+- Методы:
+  - `render(items: IProductToAdd[], total: number): void` — отображает корзину.
+
+#### Класс `OrderForm`
+
+- Отвечает за формы заказа (2 шага).
+- Поля:
+  - `_form: HTMLFormElement` — элемент формы.
+  - `_submitButton: HTMLButtonElement` — кнопка "Далее" (шаг 1) или "Оплатить" (шаг 2).
+  - `_errors: Record<string, HTMLElement>` — элементы для отображения ошибок.
+- Методы:
+  - `setFieldValue(field: string, value: string): void` — заполняет поле формы.
+  - `getFormData(): IOrderFormData` — возвращает данные формы.
+  - `setErrors(errors: Record<string, string>): void` — отображает ошибки.
+  - `setSubmitActive(isActive: boolean): void` — активирует/деактивирует кнопку "Далее" или "Оплатить".
+
+### Слой коммуникации
+
+#### Класс `AppApi`
+
+- Обёртка над базовым `Api` для работы с сервером.
+- Методы:
+  - `fetchProducts(): Promise<IProduct[]>` — получает список товаров.
+  - `submitOrder(order: IOrder): Promise<IOrderCompleted>` — отправляет заказ.
+
+#### Взаимодействие компонентов
+
+- Логика взаимодействия описана в `index.ts` (презентер).
+- Используется `EventEmitter` для генерации и обработки событий.
+- Пример:
+  - Пользователь кликает "Купить" → событие `product:add` → `CartData` добавляет товар → событие `cart:updated` → `CartView` обновляет UI.
+
+### События
+
+- `products:loaded` — товары загружены с сервера.
+- `product:open` — открытие модалки с товаром.
+- `product:add` — добавление товара в корзину.
+- `product:remove` — удаление товара из корзины.
+- `cart:open` — открытие корзины.
+- `cart:updated` — обновление корзины.
+- `order:pay-form` — открытие формы выбора оплаты и адреса (шаг 1, кнопка "Далее").
+- `order:contact-form` — открытие формы ввода телефона и email (шаг 2, кнопка "Оплатить").
+- `order:submit` — отправка заказа после нажатия "Оплатить".
+- `order:success` — успешное оформление.
+- `form:errors` — отображение ошибок формы.
+- `modal:open` — открытие модального окна.
+- `modal:close` — закрытие модального окна.
