@@ -3,7 +3,7 @@ export type TPaymentOption = 'card' | 'cash';
 
 // Категории
 export type TCategoryType =
-	| 'софт-скилл'
+	| 'софт-скил'
 	| 'другое'
 	| 'дополнительное'
 	| 'кнопка'
@@ -12,11 +12,11 @@ export type TCategoryType =
 // Товар
 export interface IProduct {
 	id: string;
-	title: string;
 	description: string;
-	category: TCategoryType;
-	price: number | null;
 	image: string;
+	title: string;
+	category: string;
+	price: number | null;
 }
 
 // Заказ
