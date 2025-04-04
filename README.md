@@ -153,53 +153,73 @@ yarn build
 #### Слой отображения (View)
 1. **`Page`**  
    - **Назначение**: Главная страница с каталогом и счётчиком корзины.  
-   - **Конструктор**: `constructor(container: HTMLElement)`  
+   - **Конструктор**: `constructor(container: HTMLElement, events: EventEmitter)`  
    - **Поля**:  
      - `_catalog: HTMLElement` — контейнер каталога.  
      - `_cartCounter: HTMLElement` — счётчик корзины.  
+     - `_cartButton: HTMLButtonElement` — кнопка корзины (интерактивный элемент).  
+     - `_events: EventEmitter` — брокер событий.  
    - **Методы**:  
      - `renderCatalog(products: IProductMainPage[]): void` — отображает каталог.  
-     - `updateCartCounter(count: number): void` — обновляет счётчик.
+     - `updateCartCounter(count: number): void` — обновляет счётчик.  
+     - `onCartClick(): void` — обработчик клика по кнопке корзины (вызывает событие `cart:open`).  
+   - **Примечание**: В конструкторе добавляется обработчик `click` на `_cartButton`.
 
 2. **`ProductCard`**  
    - **Назначение**: Карточка товара для разных шаблонов (галерея, модалка, корзина).  
-   - **Конструктор**: `constructor(template: HTMLTemplateElement, events: EventEmitter)`  
+   - **Конструктор**: `constructor(template: HTMLElement, events: EventEmitter)`  
    - **Поля**:  
-     - `_element: HTMLElement` — DOM-элемент карточки.  
+     - `_element: HTMLElement` — DOM-элемент карточки (интерактивный элемент).  
+     - `_events: EventEmitter` — брокер событий.  
    - **Методы**:  
-     - `render(data: IProductMainPage | IProduct | IProductToAdd): HTMLElement` — отображает карточку.
+     - `render(data: IProductMainPage | IProduct | IProductToAdd): HTMLElement` — отображает карточку.  
+     - `onCardClick(): void` — обработчик клика по карточке (вызывает `product:open` или `product:remove` в зависимости от контекста).  
+   - **Примечание**: В конструкторе добавляется обработчик `click` на `_element`.
 
 3. **`Modal`**  
    - **Назначение**: Универсальное модальное окно для контента.  
    - **Конструктор**: `constructor(container: HTMLElement, events: EventEmitter)`  
    - **Поля**:  
-     - `_modal: HTMLElement` — элемент модалки.  
+     - `_container: HTMLElement` — элемент модалки (интерактивный для клика по фону).  
+     - `_contentArea: HTMLElement` — область контента.  
+     - `_closeButton: HTMLButtonElement` — кнопка закрытия (интерактивный элемент).  
      - `_events: EventEmitter` — брокер событий.  
    - **Методы**:  
-     - `open(content: HTMLElement): void` — открывает модалку с контентом.  
-     - `close(): void` — закрывает модалку и очищает контент.
+     - `render(content: HTMLElement): void` — рендерит контент и открывает модалку.  
+     - `open(): void` — открывает модалку.  
+     - `close(): void` — закрывает модалку.  
+     - `onCloseClick(): void` — обработчик клика по кнопке закрытия (вызывает `close()`).  
+     - `onOverlayClick(event: MouseEvent): void` — обработчик клика по фону (закрывает, если клик вне контента).  
+   - **Примечание**: В конструкторе добавляются обработчики `click` на `_closeButton` и `_container`.
 
 4. **`CartView`**  
    - **Назначение**: Отображение корзины в модальном окне.  
-   - **Конструктор**: `constructor(container: HTMLElement)`  
+   - **Конструктор**: `constructor(container: HTMLElement, events: EventEmitter)`  
    - **Поля**:  
      - `_items: HTMLElement` — контейнер товаров.  
      - `_total: HTMLElement` — элемент суммы.  
+     - `_checkoutButton: HTMLButtonElement` — кнопка "Оформить" (интерактивный элемент).  
+     - `_events: EventEmitter` — брокер событий.  
    - **Методы**:  
-     - `render(items: IProductToAdd[], total: number): void` — отображает корзину.
+     - `render(items: IProductToAdd[], total: number): void` — отображает корзину.  
+     - `onCheckoutClick(): void` — обработчик клика по кнопке "Оформить" (вызывает `order:pay-form`).  
+   - **Примечание**: В конструкторе добавляется обработчик `click` на `_checkoutButton`.
 
 5. **`OrderForm`**  
    - **Назначение**: Формы заказа (оплата/адрес и контакты).  
    - **Конструктор**: `constructor(form: HTMLFormElement, events: EventEmitter)`  
    - **Поля**:  
-     - `_form: HTMLFormElement` — элемент формы.  
-     - `_submitButton: HTMLButtonElement` — кнопка "Далее" или "Оплатить".  
+     - `_form: HTMLFormElement` — элемент формы (интерактивный для отправки).  
+     - `_submitButton: HTMLButtonElement` — кнопка "Далее" или "Оплатить" (интерактивный элемент).  
      - `_errors: Record<string, HTMLElement>` — элементы ошибок.  
+     - `_events: EventEmitter` — брокер событий.  
    - **Методы**:  
      - `setFieldValue(field: string, value: string): void` — заполняет поле.  
      - `getFormData(): IOrderFormData` — возвращает данные.  
      - `setErrors(errors: Record<string, string>): void` — показывает ошибки.  
-     - `setSubmitActive(isActive: boolean): void` — управляет кнопкой.
+     - `setSubmitActive(isActive: boolean): void` — управляет кнопкой.  
+     - `onSubmit(event: Event): void` — обработчик отправки формы (вызывает `order:pay-form` или `order:submit`).  
+   - **Примечание**: В конструкторе добавляется обработчик `submit` на `_form`.
 
 #### Слой коммуникации
 1. **`AppApi`**  
@@ -234,7 +254,7 @@ yarn build
 
 #### Пример взаимодействия
 1. **Пользователь кликает на карточку товара в галерее**:  
-   - **View**: `ProductCard` ловит клик и вызывает `events.emit('product:open', product)`.  
+   - **View**: `ProductCard` ловит клик в `onCardClick` и вызывает `events.emit('product:open', product)`.  
    - **Presenter**: В `index.ts` обработчик `product:open` вызывает метод `CatalogData.getProduct(id)`.  
    - **Model**: `CatalogData` возвращает товар и вызывает `events.emit('modal:open', product)`.  
    - **Presenter**: Обработчик `modal:open` передаёт данные в `Modal`.  

@@ -7,12 +7,18 @@ export class ProductCard {
     private _element: HTMLElement;
     private _events: EventEmitter;
 
-    constructor(template: HTMLTemplateElement, events: EventEmitter) {
-        this._element = cloneTemplate(template);
+    constructor(template: HTMLElement, events: EventEmitter) {
+        this._element = template instanceof HTMLTemplateElement ? cloneTemplate(template) : template.cloneNode(true) as HTMLElement;
         this._events = events;
+
+        // Добавляем обработчик клика по карточке
+        this._element.addEventListener('click', (event) => this.onCardClick(event));
     }
 
     render(data: IProductMainPage | IProductPopup | IProductToAdd): HTMLElement {
+        if ('id' in data) {
+            this._element.dataset.id = data.id; // Добавляем ID в dataset
+        }
         if ('title' in data) {
             ensureElement('.card__title', this._element).textContent = data.title;
         }
@@ -33,13 +39,16 @@ export class ProductCard {
             if (descElement) descElement.textContent = data.description;
         }
 
-        if ('category' in data && !('description' in data)) {
-            this._element.addEventListener('click', () => {
-                this._events.emit('product:open', data);
-            });
-        }
-
         return this._element;
+    }
+
+    onCardClick(event: MouseEvent): void {
+        const target = event.target as HTMLElement;
+        if (target.classList.contains('card__button')) {
+            this._events.emit('product:add', { id: this._element.dataset.id });
+        } else {
+            this._events.emit('product:open', { id: this._element.dataset.id });
+        }
     }
 
     private getCategoryClass(category: string): string {
