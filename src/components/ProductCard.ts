@@ -3,6 +3,9 @@ import { EventEmitter } from './base/events';
 import { cloneTemplate } from '../utils/utils';
 import { CDN_URL } from '../utils/constants';
 
+////////////////////////////////////////////////////////////////////
+///////////////////// Карточка товара /////////////////////////////
+////////////////////////////////////////////////////////////////////
 export class ProductCard {
     private _element: HTMLElement;
     private _events: EventEmitter;
@@ -13,12 +16,13 @@ export class ProductCard {
 
         this._element.addEventListener('click', (event) => this.onCardClick(event));
     }
-
+    // Рендер карточки товара
     render(data: IProductMainPage | IProductPopup | IProductToAdd): HTMLElement {
         if ('id' in data) {
             this._element.dataset.id = data.id;
         }
         if ('title' in data) {
+         this._element.dataset.title = data.title;
             const titleElement = this._element.querySelector('.card__title');
             if (titleElement) titleElement.textContent = data.title;
         }
@@ -44,20 +48,22 @@ export class ProductCard {
 
         return this._element;
     }
-
+/////////////////////////////////
+////////////// Обработка клика
+////////////////////////////////
     onCardClick(event: MouseEvent): void {
         const target = event.target as HTMLElement;
         if (target.classList.contains('basket__item-delete')) {
-            console.log('Клик по "Удалить"', this._element.dataset.id);
+         console.log(`Товар "${this._element.dataset.title}" удален`);
             this._events.emit('product:remove', { id: this._element.dataset.id });
         } else if (target.classList.contains('card__button')) {
-            console.log('Клик по "В корзину"', this._element.dataset.id);
+            console.log(`Товар "${this._element.dataset.title}" добавлен в корзину`);
             this._events.emit('product:add', { id: this._element.dataset.id });
         } else {
             this._events.emit('product:open', { id: this._element.dataset.id });
         }
     }
-
+    // Классы для категорий
     private getCategoryClass(category: string): string {
         switch (category) {
             case 'софт-скил': return 'soft';
