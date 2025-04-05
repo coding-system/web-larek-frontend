@@ -3,23 +3,26 @@ import { ensureElement } from '../utils/utils';
 
 export class Modal {
     private _container: HTMLElement;
-    private _contentArea: HTMLElement;
+    private _content: HTMLElement;
     private _closeButton: HTMLButtonElement;
     private _events: EventEmitter;
 
     constructor(container: HTMLElement, events: EventEmitter) {
         this._container = container;
-        this._contentArea = ensureElement('.modal__content', container);
+        this._content = ensureElement('.modal__content', container);
         this._closeButton = ensureElement<HTMLButtonElement>('.modal__close', container);
         this._events = events;
 
-        // Добавляем обработчики в конструкторе
-        this._closeButton.addEventListener('click', () => this.onCloseClick());
-        this._container.addEventListener('click', (event) => this.onOverlayClick(event));
+        this._closeButton.addEventListener('click', () => this.close());
+        this._container.addEventListener('click', (event) => {
+            if (event.target === this._container) this.close();
+        });
     }
 
-    set content(value: HTMLElement) {
-        this._contentArea.replaceChildren(value);
+    render(content: HTMLElement): void {
+        this._content.innerHTML = '';
+        this._content.append(content);
+        this.open();
     }
 
     open(): void {
@@ -29,22 +32,10 @@ export class Modal {
 
     close(): void {
         this._container.classList.remove('modal_active');
-        this._contentArea.innerHTML = '';
         this._events.emit('modal:close');
     }
 
-    render(content: HTMLElement): void {
-        this.content = content;
-        this.open();
-    }
-
-    onCloseClick(): void {
-        this.close();
-    }
-
-    onOverlayClick(event: MouseEvent): void {
-        if (event.target === this._container) {
-            this.close();
-        }
+    get container(): HTMLElement {
+        return this._container;
     }
 }
