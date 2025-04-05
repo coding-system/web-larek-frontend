@@ -14,7 +14,7 @@ export class CartData {
 
 	// Добавить товар
 	addItem(item: IProduct): void {
-      // Проветка на дублиукаты
+		// Проветка на дублиукаты
 		const exists = this._items.find((product) => product.id === item.id);
 		if (!exists) {
 			this._items.push(item);
