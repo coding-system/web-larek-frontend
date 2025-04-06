@@ -60,3 +60,5 @@ export type IOrderFormData = Pick<
 	IOrder,
 	'payment' | 'address' | 'email' | 'phone'
 >;
+
+export type FormErrors = Partial<Record<keyof IOrderFormData, string>>;

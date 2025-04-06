@@ -12,7 +12,7 @@ import { CartView } from './components/cartView';
 import { PaymentForm } from './components/paymentForm';
 import { API_URL, settings } from './utils/constants';
 import { ensureElement, cloneTemplate } from './utils/utils';
-import { IProduct } from './types';
+import { IProduct, IOrderFormData, FormErrors } from './types';
 
 const events = new EventEmitter();
 const baseApi = new Api(API_URL, settings);
@@ -62,7 +62,7 @@ events.on('product:add', (data: { id: string }) => {
 	const product = catalogData.getProduct(data.id);
 	if (product) {
 		cartData.addItem(product);
-		// console.log('Товар добавлен в корзину:', product);
+      // console.log('Товар добавлен в корзину:', product);
 		modal.close();
 	} else {
 		console.error('Товар не найден:', data.id);
@@ -95,25 +95,47 @@ events.on('cart:open', () => {
 // Открытие формы оплаты
 events.on('order:pay-form', () => {
 	console.log('"Оформить" нажато');
-	modal.render(paymentForm.form); // Открываем форму оплаты в модалке
+	orderData.setItems(cartData.getItems().map((item) => item.id));
+	orderData.setTotal(cartData.getTotal());
+	modal.render(paymentForm.form);
 });
 
-// Блокировка прокрутки страницы при открытии модалки
-events.on('modal:open', () => {
-	page.lockScroll(true); // Блокируем прокрутку через Page
-});   
-
-// Разблокировка прокрутки
-events.on('modal:close', () => {
-	page.lockScroll(false); // Разблокируем прокрутку через Page
+// Изменение данных формы
+events.on('order:input-changed', (data: Partial<IOrderFormData>) => {
+	// console.log(data);
+	for (const [key, value] of Object.entries(data)) {
+		orderData.setField(key as keyof IOrderFormData, value);
+	}
 });
+
+// Валидация формы
+events.on(
+	'form:validated',
+	(data: { isValid: boolean; errors: FormErrors }) => {
+		if (modal.container.contains(paymentForm.form)) {
+			paymentForm.setErrors(data.errors);
+			paymentForm.setSubmitActive(data.isValid);
+		}
+	}
+);
+
+// Отправка формы оплаты
+events.on('order:submit-payment', () => {
+	const errors = orderData.validatePayment();
+	// console.log('Submit payment errors:', errors);
+	if (Object.keys(errors).length === 0) {
+		console.log('Форма оплаты валидна, переходим к контактам');
+	} else {
+		events.emit('form:validated', { isValid: false, errors });
+	}
+});
+
+// Блокировка прокрутки
+events.on('modal:open', () => page.lockScroll(true));
+events.on('modal:close', () => page.lockScroll(false));
 
 // Загрузка данных с API
 api
 	.fetchProducts()
-	.then((products) => {
-		catalogData.setItems(products);
-	})
-	.catch((error) => {
-		console.error('Ошибка при получении данных:', error);
-	});
+	.then((products) => catalogData.setItems(products))
+	.catch((error) => console.error('Ошибка при получении данных:', error));
