@@ -9,6 +9,7 @@ import { Page } from './components/page';
 import { ProductCard } from './components/productCard';
 import { Modal } from './components/modal';
 import { CartView } from './components/cartView';
+import { PaymentForm } from './components/paymentForm';
 import { API_URL, settings } from './utils/constants';
 import { ensureElement, cloneTemplate } from './utils/utils';
 import { IProduct } from './types';
@@ -24,9 +25,11 @@ const page = new Page(document.body, events);
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
+const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
 const modalContainer = ensureElement<HTMLElement>('#modal-container');
 const modal = new Modal(modalContainer, events);
 const cartView = new CartView(cloneTemplate(basketTemplate), events);
+const paymentForm = new PaymentForm(cloneTemplate(orderTemplate), events);
 
 // Загрузка и рендер товаров
 events.on('products:loaded', () => {
@@ -92,16 +95,17 @@ events.on('cart:open', () => {
 // Открытие формы оплаты
 events.on('order:pay-form', () => {
 	console.log('"Оформить" нажато');
+	modal.render(paymentForm.form); // Открываем форму оплаты в модалке
 });
 
 // Блокировка прокрутки страницы при открытии модалки
 events.on('modal:open', () => {
-	document.body.style.overflow = 'hidden';
-});
+	page.lockScroll(true); // Блокируем прокрутку через Page
+});   
 
 // Разблокировка прокрутки
 events.on('modal:close', () => {
-	document.body.style.overflow = '';
+	page.lockScroll(false); // Разблокируем прокрутку через Page
 });
 
 // Загрузка данных с API

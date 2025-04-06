@@ -8,6 +8,7 @@ export class Page {
 	private _catalog: HTMLElement;
 	private _cartCounter: HTMLElement;
 	private _cartButton: HTMLButtonElement;
+   private _wrapper: HTMLElement;
 	private _events: EventEmitter;
 
 	// Инициализация страницы
@@ -18,9 +19,19 @@ export class Page {
 			'.header__basket',
 			container
 		);
+      this._wrapper = ensureElement<HTMLElement>('.page__wrapper', container); // Инициализируем wrapper
 		this._events = events;
 
 		this._cartButton.addEventListener('click', () => this.onCartClick());
+	}
+
+   // Метод для блокировки/разблокировки прокрутки
+	lockScroll(lock: boolean): void {
+		if (lock) {
+			this._wrapper.classList.add('page__wrapper_locked');
+		} else {
+			this._wrapper.classList.remove('page__wrapper_locked');
+		}
 	}
 
 	// Отрисовка каталога
