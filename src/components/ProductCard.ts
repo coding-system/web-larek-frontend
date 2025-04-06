@@ -1,6 +1,6 @@
 import { IProductMainPage, IProductPopup, IProductToAdd } from '../types';
 import { EventEmitter } from './base/events';
-import { ensureElement, cloneTemplate } from '../utils/utils';
+import { cloneTemplate } from '../utils/utils';
 import { CDN_URL } from '../utils/constants';
 
 ////////////////////////////////////////////////////////////////////

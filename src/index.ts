@@ -4,6 +4,7 @@ import { AppApi } from './components/appApi';
 import { Api } from './components/base/api';
 import { CatalogData } from './components/catalogData';
 import { CartData } from './components/cartData';
+import { OrderData } from './components/orderData';
 import { Page } from './components/page';
 import { ProductCard } from './components/productCard';
 import { Modal } from './components/modal';
@@ -17,6 +18,7 @@ const baseApi = new Api(API_URL, settings);
 const api = new AppApi(baseApi);
 const catalogData = new CatalogData(events);
 const cartData = new CartData(events);
+const orderData = new OrderData(events, api);
 const page = new Page(document.body, events);
 
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
@@ -66,7 +68,6 @@ events.on('product:add', (data: { id: string }) => {
 
 // Удаление товара из корзины
 events.on('product:remove', (data: { id: string }) => {
-	console.log('Событие product:remove получено:', data.id);
 	cartData.removeItem(data.id);
 });
 
@@ -86,6 +87,11 @@ events.on('cart:open', () => {
 	const items = cartData.getItems();
 	cartView.render(items, cartData.getTotal());
 	modal.render(cartView.container);
+});
+
+// Открытие формы оплаты
+events.on('order:pay-form', () => {
+	console.log('"Оформить" нажато');
 });
 
 // Блокировка прокрутки страницы при открытии модалки
