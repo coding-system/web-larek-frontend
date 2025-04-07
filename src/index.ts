@@ -10,6 +10,7 @@ import { ProductCard } from './components/productCard';
 import { Modal } from './components/modal';
 import { CartView } from './components/cartView';
 import { PaymentForm } from './components/paymentForm';
+import { ContactsForm } from './components/contactsForm';
 import { API_URL, settings } from './utils/constants';
 import { ensureElement, cloneTemplate } from './utils/utils';
 import { IProduct, IOrderFormData, FormErrors } from './types';
@@ -26,10 +27,12 @@ const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
+const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
 const modalContainer = ensureElement<HTMLElement>('#modal-container');
 const modal = new Modal(modalContainer, events);
 const cartView = new CartView(cloneTemplate(basketTemplate), events);
 const paymentForm = new PaymentForm(cloneTemplate(orderTemplate), events);
+const contactsForm = new ContactsForm(cloneTemplate(contactsTemplate), events);
 
 // Загрузка и рендер товаров
 events.on('products:loaded', () => {
@@ -94,40 +97,56 @@ events.on('cart:open', () => {
 
 // Открытие формы оплаты
 events.on('order:pay-form', () => {
-	console.log('"Оформить" нажато');
-	orderData.setItems(cartData.getItems().map((item) => item.id));
-	orderData.setTotal(cartData.getTotal());
-	modal.render(paymentForm.form);
+   console.log('"Оформить" нажато');
+   orderData.setItems(cartData.getItems().map(item => item.id));
+   orderData.setTotal(cartData.getTotal());
+   modal.render(paymentForm.form);
 });
 
 // Изменение данных формы
 events.on('order:input-changed', (data: Partial<IOrderFormData>) => {
-	// console.log(data);
-	for (const [key, value] of Object.entries(data)) {
-		orderData.setField(key as keyof IOrderFormData, value);
-	}
+   // console.log(data);
+    for (const [key, value] of Object.entries(data)) {
+        orderData.setField(key as keyof IOrderFormData, value);
+    }
 });
 
 // Валидация формы
-events.on(
-	'form:validated',
-	(data: { isValid: boolean; errors: FormErrors }) => {
-		if (modal.container.contains(paymentForm.form)) {
-			paymentForm.setErrors(data.errors);
-			paymentForm.setSubmitActive(data.isValid);
-		}
-	}
-);
+events.on('form:validated', (data: { isValid: boolean; errors: FormErrors }) => {
+   if (modal.container.contains(paymentForm.form)) {
+       paymentForm.setErrors(data.errors);
+       paymentForm.setSubmitActive(data.isValid);
+   } else if (modal.container.contains(contactsForm.form)) {
+       contactsForm.setErrors(data.errors);
+       contactsForm.setSubmitActive(data.isValid);
+   }
+});
 
 // Отправка формы оплаты
 events.on('order:submit-payment', () => {
-	const errors = orderData.validatePayment();
-	// console.log('Submit payment errors:', errors);
-	if (Object.keys(errors).length === 0) {
-		console.log('Форма оплаты валидна, переходим к контактам');
-	} else {
-		events.emit('form:validated', { isValid: false, errors });
-	}
+   const errors = orderData.validatePayment();
+   if (Object.keys(errors).length === 0) {
+       modal.render(contactsForm.form); // Переходим к форме контактов
+   } else {
+       events.emit('form:validated', { isValid: false, errors });
+   }
+});
+
+// Отправка формы контактов
+events.on('order:submit-contacts', () => {
+   const errors = orderData.validateContacts();
+   if (Object.keys(errors).length === 0) {
+       orderData.submit(); // Отправляем заказ
+   } else {
+       events.emit('form:validated', { isValid: false, errors });
+   }
+});
+
+// Успешная отправка заказа
+events.on('order:success', () => {
+   modal.close();
+   orderData.clear();
+   page.updateCartCounter(0);
 });
 
 // Блокировка прокрутки
