@@ -36,117 +36,120 @@ const contactsForm = new ContactsForm(cloneTemplate(contactsTemplate), events);
 
 // Загрузка и рендер товаров
 events.on('products:loaded', () => {
-	const products = catalogData.getItems();
-	const cardsArray = products.map((product) => {
-		const card = new ProductCard(cardCatalogTemplate, events);
-		return card.render(product);
-	});
-	page.renderCatalog(cardsArray);
-	page.updateCartCounter(cartData.getItems().length);
+    const products = catalogData.getItems();
+    const cardsArray = products.map((product) => {
+        const card = new ProductCard(cardCatalogTemplate, events);
+        return card.render(product);
+    });
+    page.renderCatalog(cardsArray);
+    page.updateCartCounter(cartData.getItems().length);
 });
 
 // Открытие карточки в модалке
 events.on('product:open', (data: IProduct) => {
-	const product = catalogData.getProduct(data.id);
-	if (product) {
-		let cardModal: ProductCard;
-		try {
-			cardModal = new ProductCard(cloneTemplate(cardPreviewTemplate), events);
-		} catch (error) {
-			console.error('Ошибка клонирования #card-preview:', error);
-			return;
-		}
-		modal.render(cardModal.render(product));
-	}
+    const product = catalogData.getProduct(data.id);
+    if (product) {
+        let cardModal: ProductCard;
+        try {
+            cardModal = new ProductCard(cloneTemplate(cardPreviewTemplate), events);
+        } catch (error) {
+            console.error('Ошибка клонирования #card-preview:', error);
+            return;
+        }
+        modal.render(cardModal.render(product));
+    }
 });
 
 // Добавление товара в корзину
 events.on('product:add', (data: { id: string }) => {
-	const product = catalogData.getProduct(data.id);
-	if (product) {
-		cartData.addItem(product);
-      // console.log('Товар добавлен в корзину:', product);
-		modal.close();
-	} else {
-		console.error('Товар не найден:', data.id);
-	}
+    const product = catalogData.getProduct(data.id);
+    if (product) {
+        cartData.addItem(product);
+        modal.close();
+    } else {
+        console.error('Товар не найден:', data.id);
+    }
 });
 
 // Удаление товара из корзины
 events.on('product:remove', (data: { id: string }) => {
-	cartData.removeItem(data.id);
+    cartData.removeItem(data.id);
 });
 
 // Обновление корзины
 events.on('cart:changed', (items: IProduct[]) => {
-	page.updateCartCounter(items.length);
-	if (
-		modal.container.classList.contains('modal_active') &&
-		modal.container.querySelector('.basket')
-	) {
-		cartView.render(items, cartData.getTotal());
-	}
+    page.updateCartCounter(items.length);
+    if (
+        modal.container.classList.contains('modal_active') &&
+        modal.container.querySelector('.basket')
+    ) {
+        cartView.render(items, cartData.getTotal());
+    }
 });
 
 // Открытие корзины
 events.on('cart:open', () => {
-	const items = cartData.getItems();
-	cartView.render(items, cartData.getTotal());
-	modal.render(cartView.container);
+    const items = cartData.getItems();
+    cartView.render(items, cartData.getTotal());
+    modal.render(cartView.container);
 });
 
 // Открытие формы оплаты
 events.on('order:pay-form', () => {
-   console.log('"Оформить" нажато');
-   orderData.setItems(cartData.getItems().map(item => item.id));
-   orderData.setTotal(cartData.getTotal());
-   modal.render(paymentForm.form);
+    orderData.setItems(cartData.getItems().map(item => item.id));
+    orderData.setTotal(cartData.getTotal());
+    modal.render(paymentForm.form);
 });
 
 // Изменение данных формы
 events.on('order:input-changed', (data: Partial<IOrderFormData>) => {
-   // console.log(data);
     for (const [key, value] of Object.entries(data)) {
         orderData.setField(key as keyof IOrderFormData, value);
+    }
+    // Проверяем валидность всей формы контактов, если она открыта
+    if (modal.container.contains(contactsForm.form)) {
+        const errors = orderData.validateContacts();
+        const isValid = Object.keys(errors).length === 0;
+        events.emit('form:validated', { isValid, errors });
     }
 });
 
 // Валидация формы
 events.on('form:validated', (data: { isValid: boolean; errors: FormErrors }) => {
-   if (modal.container.contains(paymentForm.form)) {
-       paymentForm.setErrors(data.errors);
-       paymentForm.setSubmitActive(data.isValid);
-   } else if (modal.container.contains(contactsForm.form)) {
-       contactsForm.setErrors(data.errors);
-       contactsForm.setSubmitActive(data.isValid);
-   }
+    if (modal.container.contains(paymentForm.form)) {
+        paymentForm.setErrors(data.errors);
+        paymentForm.setSubmitActive(data.isValid);
+    } else if (modal.container.contains(contactsForm.form)) {
+        contactsForm.setErrors(data.errors);
+        contactsForm.setSubmitActive(data.isValid);
+    }
 });
 
 // Отправка формы оплаты
 events.on('order:submit-payment', () => {
-   const errors = orderData.validatePayment();
-   if (Object.keys(errors).length === 0) {
-       modal.render(contactsForm.form); // Переходим к форме контактов
-   } else {
-       events.emit('form:validated', { isValid: false, errors });
-   }
+    const errors = orderData.validatePayment();
+    if (Object.keys(errors).length === 0) {
+        modal.render(contactsForm.form);
+    } else {
+        events.emit('form:validated', { isValid: false, errors });
+    }
 });
 
 // Отправка формы контактов
 events.on('order:submit-contacts', () => {
-   const errors = orderData.validateContacts();
-   if (Object.keys(errors).length === 0) {
-       orderData.submit(); // Отправляем заказ
-   } else {
-       events.emit('form:validated', { isValid: false, errors });
-   }
+    const errors = orderData.validateContacts();
+    if (Object.keys(errors).length === 0) {
+        orderData.submit();
+    } else {
+        events.emit('form:validated', { isValid: false, errors });
+    }
 });
 
 // Успешная отправка заказа
 events.on('order:success', () => {
-   modal.close();
-   orderData.clear();
-   page.updateCartCounter(0);
+    modal.close();
+    orderData.clear();
+    page.updateCartCounter(0);
 });
 
 // Блокировка прокрутки
@@ -155,6 +158,6 @@ events.on('modal:close', () => page.lockScroll(false));
 
 // Загрузка данных с API
 api
-	.fetchProducts()
-	.then((products) => catalogData.setItems(products))
-	.catch((error) => console.error('Ошибка при получении данных:', error));
+    .fetchProducts()
+    .then((products) => catalogData.setItems(products))
+    .catch((error) => console.error('Ошибка при получении данных:', error));
