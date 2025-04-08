@@ -1,6 +1,6 @@
 # Проектная работа "Веб-ларек"
 
-### Стек технолологий:
+### Стек технологий:
 
 - HTML
 - SCSS
@@ -24,29 +24,29 @@
 
 ## Установка и запуск
 
-Для установки и запуска проекта необходимо выполнить команды
+Для установки и запуска проекта необходимо выполнить команды:
 
-```
+```bash
 npm install
 npm run start
 ```
 
 или
 
-```
+```bash
 yarn
 yarn start
 ```
 
 ## Сборка
 
-```
+```bash
 npm run build
 ```
 
 или
 
-```
+```bash
 yarn build
 ```
 
@@ -112,7 +112,7 @@ yarn build
 - **View** — отображает данные без бизнес-логики.
 - **Presenter** — связывает слои через события (**EventEmitter**), обеспечивая слабую связь.
 
-### Слои и классы
+### Слой данных (Model)
 
 #### CatalogData
 
@@ -131,7 +131,6 @@ yarn build
 - Назначение: Управление заказом и валидацией.
 - Методы:
   - `setField(field, value)` — установка и валидация поля.
-  - `setItems()` — установка и валидация поля.
   - `getOrder()` — получение данных заказа.
   - `validatePayment()` — валидация оплаты и адреса.
   - `validateContacts()` — валидация контактов.
@@ -144,7 +143,7 @@ yarn build
 - **ProductCard** — карточка товара для каталога, модалки и корзины.
 - **Modal** — универсальное модальное окно.
 - **CartView** — отображение корзины.
-- **Form** — базовый класс формы заказа.
+- **OrderForm (абстрактный)** — базовый класс формы заказа.
 - **PaymentForm** — форма оплаты.
 - **ContactsForm** — форма контактов.
 
@@ -154,11 +153,6 @@ yarn build
 
 - Назначение: Работа с сервером.
 - Методы: `fetchProducts()`, `submitOrder()`.
-
-#### FormValidator
-
-- Назначение: Валидация форм.
-- Методы: `validateFields()`, `isPaymentValid()`, `isContactsValid()`.
 
 #### Api (базовый класс)
 
@@ -174,19 +168,34 @@ yarn build
 
 - **index.ts** — связывает Model и View через события.
 
+### Взаимодействие компонентов
+
+Компоненты общаются через **EventEmitter**:
+
+- Цепочка: **View → Presenter → Model → Presenter → View**
+- Валидация в **OrderData**, View отображает результат.
+
+#### Пример
+
+Клик по карточке:
+
+- ProductCard → `product:open`
+- index.ts → `CatalogData.getProduct()`
+- Modal → `render()`
+
 #### Основные события
 
-- `products:loaded` - загрузка товаров.
-- `product:open` - открытие модалки товара.
-- `product:add` - добавление товара в корзину.
-- `product:remove` - удаление товара из корзины.
-- `cart:open` - открытие корзины.
-- `cart:changed` - обновление корзины.
-- `order:pay-form` - форма оплаты.
-- `order:input-changed` - изменение поля.
-- `order:submit-payment` - отправка оплаты.
-- `order:submit-contacts` - отправка контактов.
-- `form:validated` - результат валидации.
-- `modal:open` - 
-- `modal:close` - 
-- `order:success` - успешный заказ.
+- `products:loaded`
+- `product:open`
+- `product:add`
+- `product:remove`
+- `cart:open`
+- `cart:changed`
+- `order:pay-form`
+- `order:input-changed`
+- `order:submit-payment`
+- `order:submit-contacts`
+- `form:validated`
+- `modal:open`
+- `modal:close`
+
