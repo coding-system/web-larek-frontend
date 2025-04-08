@@ -1,20 +1,13 @@
 import { EventEmitter } from './base/events';
-import { ProductCard } from './productCard';
-import { ensureElement, cloneTemplate } from '../utils/utils';
-import { IProductToAdd } from '../types';
-
-////////////////////////////////////////////////////////////////////
-///////////////////// Отображение корзины //////////////////////////
-////////////////////////////////////////////////////////////////////
+import { ensureElement } from '../utils/utils';
 
 export class CartView {
 	private _container: HTMLElement;
 	private _items: HTMLElement;
 	private _total: HTMLElement;
-	private _checkoutButton: HTMLButtonElement; // Кнопка Оформить
+	private _checkoutButton: HTMLButtonElement;
 	private _events: EventEmitter;
 
-	// Конструктор инициализирует компонент корзины
 	constructor(container: HTMLElement, events: EventEmitter) {
 		this._container = container;
 		this._items = ensureElement('.basket__list', container);
@@ -25,48 +18,24 @@ export class CartView {
 		);
 		this._events = events;
 
-		// Назначаем обработчик клика на кнопку "Оформить"
 		this._checkoutButton.addEventListener('click', () =>
-			this.onCheckoutClick()
+			this._events.emit('order:pay-form')
 		);
 	}
 
-	// Рендер товаров в корзине
-	render(items: IProductToAdd[], total: number): void {
+	render(items: HTMLElement[], total: number): void {
 		this._items.innerHTML = '';
-		const cardBasketTemplate =
-			ensureElement<HTMLTemplateElement>('#card-basket');
-
-		// Проверяем, есть ли товары в корзине
 		if (items.length === 0) {
 			this._items.innerHTML = '<p>Корзина пуста</p>';
 			this._checkoutButton.disabled = true;
+			this._total.textContent = '0 синапсов';
 		} else {
-			// Создаём массив карточек товаров
-			const itemElements = items.map((item, index) => {
-				const card = new ProductCard(
-					cloneTemplate(cardBasketTemplate),
-					this._events
-				);
-				const renderedCard = card.render(item);
-				renderedCard.dataset.id = item.id;
-				const indexElement = ensureElement('.basket__item-index', renderedCard);
-				indexElement.textContent = (index + 1).toString();
-				return renderedCard;
-			});
-			this._items.append(...itemElements);
+			this._items.append(...items);
+			this._total.textContent = `${total} синапсов`;
 			this._checkoutButton.disabled = false;
 		}
-
-		this._total.textContent = `${total} синапсов`;
 	}
 
-	// Обработчик клика Оформить
-	onCheckoutClick(): void {
-		this._events.emit('order:pay-form');
-	}
-
-	// Геттер для получения контейнера корзины
 	get container(): HTMLElement {
 		return this._container;
 	}

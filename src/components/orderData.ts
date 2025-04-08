@@ -4,79 +4,90 @@ import { AppApi } from './appApi';
 import { FormValidator } from './formValidator';
 
 export class OrderData {
-    private _order: IOrder = { 
-        items: [], 
-        total: 0, 
-        payment: '' as TPaymentOption, 
-        address: '', 
-        phone: '', 
-        email: '' 
-    };
-    private _events: EventEmitter;
-    private _api: AppApi;
+	private _order: IOrder = {
+		items: [],
+		total: 0,
+		payment: '' as TPaymentOption,
+		address: '',
+		phone: '',
+		email: '',
+	};
+	private _events: EventEmitter;
+	private _api: AppApi;
 
-    constructor(events: EventEmitter, api: AppApi) {
-        this._events = events;
-        this._api = api;
-    }
+	constructor(events: EventEmitter, api: AppApi) {
+		this._events = events;
+		this._api = api;
+	}
 
-    setField(field: keyof IOrderFormData, value: string): void {
-        if (field === 'payment') {
-            this._order[field] = value as TPaymentOption;
-        } else {
-            this._order[field] = value;
-        }
-      //   console.log('Order updated:', this._order);
-        this.validateField(field);
-    }
+	setField(field: keyof IOrderFormData, value: string): void {
+		if (field === 'payment') {
+			this._order[field] = value as TPaymentOption;
+		} else {
+			this._order[field] = value;
+		}
+		this.validateField(field);
+	}
 
-    setItems(items: string[]): void {
-        this._order.items = items;
-    }
+	setItems(items: string[]): void {
+		this._order.items = items;
+	}
 
-    setTotal(total: number): void {
-        this._order.total = total;
-    }
+	setTotal(total: number): void {
+		this._order.total = total;
+	}
 
-    getOrder(): IOrder {
-        return this._order;
-    }
+	getOrder(): IOrder {
+		return this._order;
+	}
 
-    private validateField(field: keyof IOrderFormData): void {
-        const errors = FormValidator.validateFields({ [field]: this._order[field] });
-        const isValid = FormValidator.isPaymentValid(this._order);
-      //   console.log('Validation result:', { field, errors, isValid });
-        this._events.emit('form:validated', { isValid, errors });
-    }
+	private validateField(field: keyof IOrderFormData): void {
+		let errors: FormErrors;
+		let isValid: boolean;
 
-    validatePayment(): FormErrors {
-        return FormValidator.validateFields({
-            payment: this._order.payment,
-            address: this._order.address
-        });
-    }
+		if (field === 'payment' || field === 'address') {
+			errors = this.validatePayment();
+			isValid = FormValidator.isPaymentValid(this._order);
+			this._events.emit('form:validated', { isValid, errors, form: 'payment' });
+		} else {
+			errors = this.validateContacts();
+			isValid = FormValidator.isContactsValid(this._order);
+			this._events.emit('form:validated', {
+				isValid,
+				errors,
+				form: 'contacts',
+			});
+		}
+	}
 
-    validateContacts(): FormErrors {
-        return FormValidator.validateFields({
-            email: this._order.email,
-            phone: this._order.phone
-        });
-    }
+	validatePayment(): FormErrors {
+		return FormValidator.validateFields({
+			payment: this._order.payment,
+			address: this._order.address,
+		});
+	}
 
-    async submit(): Promise<void> {
-        const response = await this._api.submitOrder(this._order);
-        this._events.emit('order:success', response);
-        this.clear();
-    }
+	validateContacts(): FormErrors {
+		return FormValidator.validateFields({
+			email: this._order.email,
+			phone: this._order.phone,
+		});
+	}
 
-    clear(): void {
-        this._order = { 
-            items: [], 
-            total: 0, 
-            payment: '' as TPaymentOption, 
-            address: '', 
-            phone: '', 
-            email: '' 
-        };
-    }
+	async submit(): Promise<void> {
+		const response = await this._api.submitOrder(this._order);
+		this._events.emit('order:success', response);
+		this.clear();
+	}
+
+	clear(): void {
+		this._order = {
+			items: [],
+			total: 0,
+			payment: '' as TPaymentOption,
+			address: '',
+			phone: '',
+			email: '',
+		};
+	}
 }

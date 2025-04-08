@@ -21,7 +21,7 @@ export interface IProduct {
 
 // Заказ
 export interface IOrder {
-	items: string[]; // ID товаров
+	items: string[];
 	total: number;
 	payment: TPaymentOption;
 	address: string;
